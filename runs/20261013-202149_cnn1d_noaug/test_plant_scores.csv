@@ -1,0 +1,27 @@
+group,label,species,prob,n_clips
+Tobacco Cut/126,0,tobacco,0.3461285,29
+Tobacco Cut/152,0,tobacco,0.48668504,1
+Tobacco Cut/163,0,tobacco,0.3374347,65
+Tobacco Cut/172,0,tobacco,0.11696145,1
+Tobacco Dry/15,1,tobacco,0.41832477,5
+Tobacco Dry/21,1,tobacco,0.38456142,2
+Tobacco Dry/3,1,tobacco,0.23824243,12
+Tobacco Dry/74,1,tobacco,0.49454498,10
+Tobacco Dry/75,1,tobacco,0.5091597,4
+Tobacco Dry/87,1,tobacco,0.4688614,11
+Tobacco Dry/9,1,tobacco,0.27057356,2
+Tomato Cut/123,0,tomato,0.26390612,7
+Tomato Cut/203,0,tomato,0.4231156,64
+Tomato Cut/209,0,tomato,0.45599666,12
+Tomato Cut/219,0,tomato,0.46059552,8
+Tomato Cut/220,0,tomato,0.43293953,10
+Tomato Cut/235,0,tomato,0.35318488,18
+Tomato Dry/10,1,tomato,0.71955657,6
+Tomato Dry/103,1,tomato,0.7697555,26
+Tomato Dry/117,1,tomato,0.19347194,5
+Tomato Dry/119,1,tomato,0.37781912,2
+Tomato Dry/35,1,tomato,0.39767343,129
+Tomato Dry/45,1,tomato,0.49298766,1
+Tomato Dry/65,1,tomato,0.13484283,1
+Tomato Dry/8,1,tomato,0.6660291,111
+Tomato Dry/9,1,tomato,0.53490496,8

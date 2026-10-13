@@ -12,3 +12,7 @@ dataset/
 artifacts/cache/
 runs/*/model.keras
 /*.log
+
+# Coursework documents (keep private); the reference model code stays tracked
+context/*.pdf
+context/*.docx

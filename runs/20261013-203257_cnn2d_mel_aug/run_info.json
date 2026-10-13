@@ -1,0 +1,19 @@
+{
+  "experiment": "cnn2d_mel_aug",
+  "model": "cnn2d_mel",
+  "config_hash": "3059323414",
+  "dataset_fingerprint": "8332402651c23ab8",
+  "n_signals": 3063,
+  "n_noise": 2414,
+  "environment": {
+    "python": "3.10.20",
+    "platform": "Linux-6.18.44-fc-v114-x86_64-with-glibc2.39",
+    "tensorflow": "2.16.2",
+    "numpy": "1.26.4",
+    "scipy": "1.15.3",
+    "scikit_learn": "1.7.2",
+    "librosa": "0.11.0",
+    "git_commit": null,
+    "timestamp": "2026-10-13T20:32:57"
+  }
+}

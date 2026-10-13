@@ -1,0 +1,120 @@
+project:
+  name: drought-acoustics
+  seed: 42
+  artifacts_dir: artifacts
+  runs_dir: runs
+data:
+  raw_dir: dataset/doi_10_5061_dryad_jwstqjqf7__v20230403/PlantSounds
+  sample_rate: 500000
+  clip_length: 1001
+  classes:
+    Tomato Cut:
+      label: 0
+      species: tomato
+    Tobacco Cut:
+      label: 0
+      species: tobacco
+    Tomato Dry:
+      label: 1
+      species: tomato
+    Tobacco Dry:
+      label: 1
+      species: tobacco
+  noise_sources:
+    Empty Pot: empty_pot
+    Greenhouse Noises: greenhouse
+  species:
+  - tomato
+  - tobacco
+preprocessing:
+  remove_dc: true
+  bandpass:
+    enabled: true
+    low_hz: 20000
+    high_hz: 100000
+    order: 4
+  scaling: global_rms
+split:
+  strategy: grouped_holdout
+  group_by: plant
+  test_size: 0.15
+  val_size: 0.15
+  cv_folds: 5
+  noise_split:
+  - 0.7
+  - 0.15
+  - 0.15
+augmentation:
+  enabled: true
+  noise_prob: 0.8
+  snr_db:
+  - 0.0
+  - 20.0
+  noise_sources:
+  - empty_pot
+  - greenhouse
+  max_shift: 20
+  polarity_flip_prob: 0.5
+model:
+  name: cnn1d
+  cnn1d:
+    kernel_size: 25
+    filters:
+    - 32
+    - 64
+    - 128
+    pool_size: 4
+    dropout: 0.5
+    dense_units: 128
+    batch_norm: true
+  mel:
+    n_fft: 256
+    hop_length: 16
+    n_mels: 32
+    fmin: 20000
+    fmax: 100000
+  cnn2d_mel:
+    filters:
+    - 16
+    - 32
+    - 64
+    dropout: 0.4
+    dense_units: 64
+  lstm_mel:
+    units: 64
+    dropout: 0.3
+    dense_units: 32
+training:
+  batch_size: 64
+  epochs: 60
+  learning_rate: 0.001
+  class_weighting: balanced
+  early_stopping_patience: 12
+  reduce_lr_patience: 5
+  reduce_lr_factor: 0.5
+tuning:
+  max_trials: 6
+  epochs: 30
+  search_space:
+    model.cnn1d.kernel_size:
+    - 9
+    - 25
+    model.cnn1d.dropout:
+    - 0.3
+    - 0.5
+    model.cnn1d.batch_norm:
+    - false
+    - true
+    training.learning_rate:
+    - 0.001
+    - 0.0003
+evaluation:
+  threshold: val_f1
+  snr_levels_db:
+  - 20
+  - 10
+  - 5
+  - 0
+  - -5
+  bootstrap_iterations: 1000
+experiment: cnn1d_aug

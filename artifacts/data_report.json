@@ -1,0 +1,55 @@
+{
+  "dataset_fingerprint": "8332402651c23ab8",
+  "n_files": 5477,
+  "n_invalid": 0,
+  "invalid_examples": [],
+  "duplicate_audio_files": 0,
+  "per_folder": [
+    {
+      "folder": "Empty Pot",
+      "files": 1036,
+      "plants": 1,
+      "median_rms": 0.02160758338868618,
+      "pct_with_clipping": 0.0
+    },
+    {
+      "folder": "Greenhouse Noises",
+      "files": 1378,
+      "plants": 4,
+      "median_rms": 0.04121193662285805,
+      "pct_with_clipping": 0.8708272859216255
+    },
+    {
+      "folder": "Tobacco Cut",
+      "files": 506,
+      "plants": 28,
+      "median_rms": 0.02518494985997677,
+      "pct_with_clipping": 0.0
+    },
+    {
+      "folder": "Tobacco Dry",
+      "files": 275,
+      "plants": 35,
+      "median_rms": 0.027642376720905304,
+      "pct_with_clipping": 0.36363636363636365
+    },
+    {
+      "folder": "Tomato Cut",
+      "files": 660,
+      "plants": 43,
+      "median_rms": 0.030638687312602997,
+      "pct_with_clipping": 0.0
+    },
+    {
+      "folder": "Tomato Dry",
+      "files": 1622,
+      "plants": 64,
+      "median_rms": 0.020223446190357208,
+      "pct_with_clipping": 0.0
+    }
+  ],
+  "class_balance": {
+    "0": 1166,
+    "1": 1897
+  }
+}

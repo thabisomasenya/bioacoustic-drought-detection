@@ -1,0 +1,13 @@
+split,label,species,clips,plants
+train,0,tobacco,344,21
+train,0,tomato,436,32
+train,1,tobacco,182,22
+train,1,tomato,1069,48
+val,0,tobacco,66,3
+val,0,tomato,105,5
+val,1,tobacco,47,6
+val,1,tomato,264,7
+test,0,tobacco,96,4
+test,0,tomato,119,6
+test,1,tobacco,46,7
+test,1,tomato,289,9

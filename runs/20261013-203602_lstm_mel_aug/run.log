@@ -1,0 +1,2 @@
+2026-10-13 20:36:15,348 | INFO    | drought_acoustics.pipeline | Split (clips): {'train': 2031, 'val': 482, 'test': 550}
+2026-10-13 20:38:01,657 | INFO    | drought_acoustics.pipeline | TEST | macro-F1 0.594 | ROC-AUC 0.649 | bal-acc 0.610 | thr 0.45 | run runs/20261013-203602_lstm_mel_aug

@@ -1,0 +1,2 @@
+2026-10-13 21:38:36,327 | INFO    | drought_acoustics.pipeline | Fold 0 | macro-F1 0.707 | ROC-AUC 0.770
+2026-10-13 21:39:47,794 | INFO    | drought_acoustics.pipeline | Fold 1 | macro-F1 0.725 | ROC-AUC 0.791

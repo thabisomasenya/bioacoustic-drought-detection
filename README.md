@@ -59,7 +59,10 @@ src/drought_acoustics/
   reporting.py                 HTML run report
   pipeline.py                  stages: manifest, eda, train, cv, tune, compare
   cli.py                       command-line entry point
-tests/                         26 unit tests (pytest)
+tests/                         27 unit tests (pytest)
+docs/DECISIONS.md              design decisions, alternatives and evidence
+docs/PROGRESS_LOG.md           what was done, why, results so far, critique, how to resume
+scripts/run_all.sh             full resumable reproduction
 context/CNN_sounds_classifier.py   reference model from Khait et al. (kept unmodified for attribution)
 dataset/                       raw audio (not in git, see section 3)
 artifacts/                     manifest, data report, EDA, tuning, comparison  (generated)
@@ -78,8 +81,8 @@ pip install -r requirements.txt && pip install -e .
 #    (or point data.raw_dir in configs/default.yaml elsewhere)
 
 # 3. Verify and run
-make test          # 26 unit tests
-make all           # manifest -> EDA -> 4 experiments -> comparison -> 5-fold CV
+make test          # 27 unit tests
+make all           # manifest -> EDA -> tuning -> 4 holdout runs -> 4 x 5-fold CV -> comparison (resumable)
 ```
 
 Individual stages:
@@ -108,7 +111,31 @@ python -m drought_acoustics.cli train -e configs/experiments/cnn1d_aug.yaml --se
 
 ## 4. Results
 
-<!-- RESULTS -->
+> **Provisional (session 1).** CV for the baseline models is still running. See
+> `docs/PROGRESS_LOG.md` for the full status and `artifacts/comparison/` for figures.
+
+**5-fold plant-grouped cross-validation (primary estimate)**
+
+| Model | ROC-AUC (mean ± sd) | Macro-F1 (mean ± sd) | Pooled OOF ROC-AUC [95% CI] |
+|---|---|---|---|
+| 1D CNN + augmentation (proposed, tuned) | 0.781 ± 0.047 | 0.695 ± 0.038 | 0.767 [0.70–0.82] |
+| 2D Mel-CNN + augmentation (D1) | *running* | | |
+| Mel-LSTM + augmentation (D1) | *queued* | | |
+| 1D CNN, no augmentation | *queued* | | |
+
+**Holdout test set** (550 clips, 26 plants never seen in training; threshold chosen on validation)
+
+| Model | Macro-F1 | ROC-AUC [95% CI] | ROC-AUC at 0 dB SNR | at −5 dB |
+|---|---|---|---|---|
+| 1D CNN + aug (proposed) | 0.644 | 0.692 [0.53–0.85] | 0.657 | 0.640 |
+| 1D CNN, no aug | 0.616 | 0.662 [0.51–0.82] | 0.613 | 0.597 |
+| 2D Mel-CNN + aug (D1) | 0.671 | 0.728 [0.53–0.86] | 0.708 | 0.648 |
+| Mel-LSTM + aug (D1) | 0.594 | 0.649 [0.52–0.79] | 0.634 | 0.645 |
+| Majority-class baseline | 0.379 | 0.500 | – | – |
+
+All models beat the baseline. Augmentation improves robustness to held-out noise. The holdout
+alone cannot separate the architectures: the CIs overlap and span about 0.3 AUC, which is why the
+paired CV comparison is the deciding evidence.
 
 ## 5. Limitations
 

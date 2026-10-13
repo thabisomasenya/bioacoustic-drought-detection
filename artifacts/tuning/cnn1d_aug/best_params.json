@@ -1,0 +1,9 @@
+{
+  "best_params": {
+    "model.cnn1d.kernel_size": 25,
+    "model.cnn1d.dropout": 0.5,
+    "model.cnn1d.batch_norm": true,
+    "training.learning_rate": 0.001
+  },
+  "val_auc": 0.902935266494751
+}
