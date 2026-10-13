@@ -1,0 +1,4 @@
+# Deliverable 1 baseline: LSTM over log-Mel frames (same augmentation).
+experiment: lstm_mel_aug
+model: {name: lstm_mel}
+augmentation: {enabled: true}

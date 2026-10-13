@@ -1,0 +1,101 @@
+# =============================================================================
+# Default pipeline configuration
+# -----------------------------------------------------------------------------
+# Every tunable value in the pipeline lives here. Experiment files in
+# configs/experiments/ override only the keys they need (deep merge), so each
+# experiment is a small, reviewable diff against this baseline.
+# =============================================================================
+
+project:
+  name: drought-acoustics
+  seed: 42                       # global seed (Python, NumPy, TensorFlow)
+  artifacts_dir: artifacts       # manifest, cache, splits, EDA figures
+  runs_dir: runs                 # one sub-folder per training run
+
+data:
+  raw_dir: dataset/doi_10_5061_dryad_jwstqjqf7__v20230403/PlantSounds
+  sample_rate: 500000            # Hz, uncompressed 16-bit PCM
+  clip_length: 1001              # samples: acoustic peak +/- 500 (~2 ms)
+  # Folder name -> (label, species). Class 0 = mechanical (cut), 1 = drought.
+  classes:
+    "Tomato Cut":   {label: 0, species: tomato}
+    "Tobacco Cut":  {label: 0, species: tobacco}
+    "Tomato Dry":   {label: 1, species: tomato}
+    "Tobacco Dry":  {label: 1, species: tobacco}
+  # Noise-only folders: used ONLY as augmentation/robustness material.
+  noise_sources:
+    "Empty Pot": empty_pot
+    "Greenhouse Noises": greenhouse
+  species: [tomato, tobacco]     # restrict to [tomato] to mirror Deliverable 1 scope
+
+preprocessing:
+  remove_dc: true
+  bandpass:
+    enabled: true
+    low_hz: 20000                # Deliverable 1 band; holds ~85% of signal power
+    high_hz: 100000
+    order: 4                     # Butterworth order (applied forward-backward)
+  scaling: global_rms            # global_rms | peak | none  (fit on TRAIN only)
+
+split:
+  strategy: grouped_holdout      # grouped_holdout | grouped_cv
+  group_by: plant                # all clips from one plant stay in one split
+  test_size: 0.15
+  val_size: 0.15
+  cv_folds: 5
+  noise_split: [0.70, 0.15, 0.15]   # noise clips are also partitioned
+
+augmentation:
+  enabled: true
+  noise_prob: 0.8                # probability a training clip receives noise
+  snr_db: [0.0, 20.0]            # SNR drawn uniformly (dB, measured in-band)
+  noise_sources: [empty_pot, greenhouse]
+  max_shift: 20                  # circular time shift, samples (40 us)
+  polarity_flip_prob: 0.5
+
+model:
+  name: cnn1d                    # cnn1d | cnn2d_mel | lstm_mel
+  cnn1d:
+    kernel_size: 9
+    filters: [32, 64, 128]
+    pool_size: 4
+    dropout: 0.5
+    dense_units: 128
+    batch_norm: false
+  mel:                           # shared front-end for cnn2d_mel / lstm_mel
+    n_fft: 256
+    hop_length: 16
+    n_mels: 32
+    fmin: 20000
+    fmax: 100000
+  cnn2d_mel:
+    filters: [16, 32, 64]
+    dropout: 0.4
+    dense_units: 64
+  lstm_mel:
+    units: 64
+    dropout: 0.3
+    dense_units: 32
+
+training:
+  batch_size: 64
+  epochs: 60
+  learning_rate: 0.001
+  class_weighting: balanced
+  early_stopping_patience: 12    # monitored on validation ROC-AUC
+  reduce_lr_patience: 5
+  reduce_lr_factor: 0.5
+
+tuning:                          # random search, scored on validation ROC-AUC
+  max_trials: 6
+  epochs: 30                     # shorter budget per trial; early stopping still active
+  search_space:
+    model.cnn1d.kernel_size: [9, 25]       # 18 us vs 50 us receptive field per layer
+    model.cnn1d.dropout: [0.3, 0.5]
+    model.cnn1d.batch_norm: [false, true]
+    training.learning_rate: [0.001, 0.0003]
+
+evaluation:
+  threshold: val_f1              # val_f1 (tuned on validation) | 0.5
+  snr_levels_db: [20, 10, 5, 0, -5]
+  bootstrap_iterations: 1000     # plant-level (cluster) bootstrap for 95% CIs

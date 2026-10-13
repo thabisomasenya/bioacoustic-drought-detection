@@ -1,0 +1,12 @@
+# Pinned for reproducibility (tested with Python 3.10.12).
+# Install:  python3.10 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && pip install -e .
+tensorflow==2.16.2        # Keras 3 backend; on Apple Silicon optionally add tensorflow-metal
+numpy==1.26.4
+scipy==1.15.3
+scikit-learn==1.7.2
+librosa==0.11.0
+soundfile==0.14.0
+pandas==2.3.3
+matplotlib==3.10.9
+PyYAML==6.0.3
+pytest==9.1.1

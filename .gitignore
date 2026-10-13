@@ -1,0 +1,14 @@
+# Environments
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.DS_Store
+
+# Raw data is versioned by hash in artifacts/manifest.csv, not by git (22 MB, 5,477 files)
+dataset/
+
+# Large/regenerable outputs
+artifacts/cache/
+runs/*/model.keras
+/*.log

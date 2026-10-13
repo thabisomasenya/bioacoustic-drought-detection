@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "drought-acoustics"
+version = "1.0.0"
+description = "Bioacoustic drought-stress detection from 500 kHz ultrasonic plant emissions (1D CNN, TensorFlow/Keras)"
+requires-python = ">=3.10,<3.13"
+readme = "README.md"
+
+[project.scripts]
+drought-acoustics = "drought_acoustics.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["ignore::UserWarning", "ignore::DeprecationWarning"]

@@ -1,0 +1,4 @@
+# Ablation: identical 1D CNN, no augmentation. Isolates the value of SNR mixing.
+experiment: cnn1d_noaug
+model: {name: cnn1d}
+augmentation: {enabled: false}

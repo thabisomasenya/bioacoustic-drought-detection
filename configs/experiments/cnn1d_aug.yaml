@@ -1,0 +1,4 @@
+# Main model: raw-waveform 1D CNN trained with SNR noise augmentation.
+experiment: cnn1d_aug
+model: {name: cnn1d}
+augmentation: {enabled: true}

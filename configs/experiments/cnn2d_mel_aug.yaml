@@ -1,0 +1,4 @@
+# Deliverable 1 baseline: 2D CNN on log-Mel spectrograms (same augmentation).
+experiment: cnn2d_mel_aug
+model: {name: cnn2d_mel}
+augmentation: {enabled: true}
