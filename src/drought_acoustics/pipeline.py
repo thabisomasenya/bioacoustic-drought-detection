@@ -391,6 +391,9 @@ def stage_compare_cv(cfg: dict, experiments: list[str]) -> Path | None:
             pooled["roc_auc"], ci["roc_auc"]
         plants, pm = ev.plant_level(oof, 0.5)
         row["oof_plant_roc_auc"] = pm["roc_auc"]
+        for sp, d in oof.groupby("species"):
+            row[f"oof_roc_auc_{sp}"] = ev.compute_metrics(d["label"].to_numpy(),
+                                                          d["prob"].to_numpy())["roc_auc"]
         row["run"] = runs[exp].name
         rows[exp] = row
     table = pd.DataFrame(rows).T
@@ -410,6 +413,16 @@ def stage_compare_cv(cfg: dict, experiments: list[str]) -> Path | None:
                                "folds_ref_better": int((d > 0).sum()), "n_folds": len(d),
                                "t_corrected": t_stat, "p_value": p_val})
         pd.DataFrame(paired).to_csv(out / "cv_paired_differences.csv", index=False)
+        ref_oof = pd.read_csv(runs[ref] / "oof_predictions.csv")
+        boot = []
+        for exp in folds:
+            if exp == ref:
+                continue
+            res = ev.paired_bootstrap_auc_diff(ref_oof, pd.read_csv(runs[exp] / "oof_predictions.csv"),
+                                               cfg["evaluation"]["bootstrap_iterations"],
+                                               cfg["project"]["seed"])
+            boot.append({"comparison": f"{ref} - {exp}", **res})
+        pd.DataFrame(boot).to_csv(out / "oof_paired_bootstrap_auc.csv", index=False)
 
     viz.plot_cv_folds(folds, "roc_auc", out / "cv_folds_roc_auc.png",
                       viz.MODEL_COLORS, viz.MODEL_LABELS)

@@ -51,3 +51,15 @@ def test_corrected_ttest_is_more_conservative_than_plain_ttest():
     t_c, p_c = corrected_resampled_ttest(d)
     t_plain, p_plain = stats.ttest_1samp(d, 0.0)
     assert abs(t_c) < abs(t_plain) and p_c > p_plain
+
+
+def test_paired_bootstrap_detects_a_better_model():
+    from drought_acoustics.evaluation import paired_bootstrap_auc_diff
+    rng = np.random.default_rng(0)
+    rows = [{"path": f"g{g}_{i}", "group": f"g{g}", "label": g % 2} for g in range(60) for i in range(4)]
+    a = pd.DataFrame(rows)
+    b = a.copy()
+    a["prob"] = np.clip(0.25 + 0.5 * a["label"] + rng.normal(0, 0.15, len(a)), 0, 1)   # strong
+    b["prob"] = np.clip(0.45 + 0.1 * b["label"] + rng.normal(0, 0.15, len(b)), 0, 1)   # weak
+    res = paired_bootstrap_auc_diff(a, b, n_iter=200, seed=0)
+    assert res["ci_low"] > 0 and res["delta_auc"] > 0

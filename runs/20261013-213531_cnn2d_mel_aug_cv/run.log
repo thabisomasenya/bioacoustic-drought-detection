@@ -1,2 +1,8 @@
 2026-10-13 21:38:36,327 | INFO    | drought_acoustics.pipeline | Fold 0 | macro-F1 0.707 | ROC-AUC 0.770
 2026-10-13 21:39:47,794 | INFO    | drought_acoustics.pipeline | Fold 1 | macro-F1 0.725 | ROC-AUC 0.791
+2026-10-14 09:28:59,402 | INFO    | drought_acoustics.pipeline | Fold 0 already complete, loading
+2026-10-14 09:28:59,406 | INFO    | drought_acoustics.pipeline | Fold 1 already complete, loading
+2026-10-14 09:30:48,673 | INFO    | drought_acoustics.pipeline | Fold 2 | macro-F1 0.621 | ROC-AUC 0.705
+2026-10-14 09:31:56,014 | INFO    | drought_acoustics.pipeline | Fold 3 | macro-F1 0.642 | ROC-AUC 0.730
+2026-10-14 09:33:12,594 | INFO    | drought_acoustics.pipeline | Fold 4 | macro-F1 0.702 | ROC-AUC 0.788
+2026-10-14 09:33:12,831 | INFO    | drought_acoustics.pipeline | CV | macro-F1 0.679 +/- 0.045 | ROC-AUC 0.757 +/- 0.038

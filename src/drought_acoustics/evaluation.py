@@ -149,3 +149,30 @@ def corrected_resampled_ttest(diffs: np.ndarray) -> tuple[float, float]:
     t = d.mean() / np.sqrt((1 / k + 1 / (k - 1)) * var)
     p = 2 * stats.t.sf(abs(t), df=k - 1)
     return float(t), float(p)
+
+
+def paired_bootstrap_auc_diff(a: pd.DataFrame, b: pd.DataFrame, n_iter: int = 1000,
+                              seed: int = 0) -> dict:
+    """95% CI for AUC(a) - AUC(b) on the SAME clips, resampling plants (cluster bootstrap).
+
+    ``a`` and ``b`` are out-of-fold prediction frames (path, group, label, prob) from two
+    models evaluated on identical folds. Pairing on clips removes the between-plant
+    variation the two models share, which makes this far more sensitive than
+    comparing two separate confidence intervals.
+    """
+    m = a[["path", "group", "label", "prob"]].merge(b[["path", "prob"]], on="path",
+                                                     suffixes=("_a", "_b"))
+    rng = np.random.default_rng(seed)
+    by_group = {g: d for g, d in m.groupby("group")}
+    groups = np.array(list(by_group))
+    point = roc_auc_score(m["label"], m["prob_a"]) - roc_auc_score(m["label"], m["prob_b"])
+    diffs = []
+    for _ in range(n_iter):
+        d = pd.concat([by_group[g] for g in rng.choice(groups, size=len(groups), replace=True)])
+        if d["label"].nunique() < 2:
+            continue
+        diffs.append(roc_auc_score(d["label"], d["prob_a"]) - roc_auc_score(d["label"], d["prob_b"]))
+    diffs = np.array(diffs)
+    return {"delta_auc": float(point), "ci_low": float(np.percentile(diffs, 2.5)),
+            "ci_high": float(np.percentile(diffs, 97.5)),
+            "p_one_sided": float(np.mean(diffs <= 0)), "n_clips": int(len(m))}
