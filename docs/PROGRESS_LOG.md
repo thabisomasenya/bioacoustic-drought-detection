@@ -1,9 +1,9 @@
 # Progress log: Deliverable 4 implementation
 
-**Session 1: Tue 13 Oct 2026, 17:30–21:45 (SAST)**
-**Status:** the pipeline is built, tested and committed. All four models are trained and evaluated
-on the holdout split. 5-fold CV is complete for the proposed model and 2/5 complete for the 2D
-Mel-CNN. The remaining CV runs are queued for session 2 (see section 6).
+**Session 1: Tue 13 Oct 2026, 17:30–21:45 (SAST).** Pipeline built, holdout runs, 1D CNN CV.
+**Session 2: Wed 14 Oct 2026, from 09:27 (SAST).** CV completed for all models, statistical
+comparison added, and the Deliverable 4 report drafted (Claude Doc).
+**Status:** all experiments are complete and committed. The report draft covers all 8 sections.
 
 ---
 
@@ -13,20 +13,15 @@ Mel-CNN. The remaining CV runs are queued for session 2 (see section 6).
 |---|---|
 | Data audit, manifest, data versioning | Done: 5,477 files, 0 invalid, 0 duplicates, fingerprint `8332402651c23ab8` |
 | EDA figures (6) | Done: `artifacts/eda/` |
-| Modular package `src/drought_acoustics/` (12 modules) + CLI + YAML configs | Done |
-| Unit tests | Done: 27 passing (`make test`) |
+| Modular package (13 modules) + CLI + YAML configs | Done |
+| Unit tests | Done: 34 passing (`make test`) |
 | Representative plant-grouped split (v2) | Done (v1 kept as evidence in `artifacts/decision_log/`) |
-| Hyperparameter tuning (6-trial random search, validation only) | Done: `artifacts/tuning/cnn1d_aug/` |
-| Holdout runs: 1D CNN+aug, 1D CNN no-aug, 2D Mel-CNN, Mel-LSTM | Done: `runs/20261013-2*` |
-| Holdout comparison figures/table | Done: `artifacts/comparison/` |
-| 5-fold grouped CV: 1D CNN + aug | Done |
-| 5-fold grouped CV: 2D Mel-CNN | 2 of 5 folds (resumes automatically) |
-| 5-fold grouped CV: Mel-LSTM, 1D CNN no-aug | Not started |
-| Paired CV comparison | Waiting on the CV runs above |
-| README results section | Provisional; finalise after CV |
-| Deliverable 4 report text | Not started (next step after CV) |
-
----
+| Hyperparameter tuning | Done: `artifacts/tuning/cnn1d_aug/` |
+| Holdout runs (4 models) + HTML reports | Done: `runs/20261013-2*` |
+| 5-fold grouped CV, all 4 models | Done |
+| Paired comparison (corrected t-test + paired cluster bootstrap) | Done: `artifacts/comparison/` |
+| README results | Final |
+| Deliverable 4 report | Drafted in a Claude Doc, all 8 sections + references; awaiting your review |
 
 ## 2. What was done and why (chronological)
 
@@ -79,9 +74,24 @@ Mel-CNN. The remaining CV runs are queued for session 2 (see section 6).
 10. **Holdout results showed the 2D Mel-CNN slightly ahead of the 1D CNN with overlapping CIs
     (challenge C3), so paired 5-fold CV was queued for all four models.**
 
+**Session 2**
+
+11. **Resumed the runner.** It skipped finished work and continued the 2D Mel-CNN CV after its
+    second fold, then ran Mel-LSTM CV and 1D CNN no-augmentation CV.
+12. **Added formal model comparison.** This includes the Nadeau–Bengio corrected resampled t-test
+    on fold scores and a paired plant-level bootstrap of the AUC difference on pooled out-of-fold
+    predictions. Per-species out-of-fold AUC was also added.
+13. **Verified the reference code's origin.** The Cell paper's STAR Methods point to a Zenodo
+    release (doi:10.5281/zenodo.7612742) of the "CNN binary classifier training function", whose
+    description matches `context/CNN_sounds_classifier.py`.
+14. **Added a `report` stage** that re-renders a run's HTML report without retraining. Added 7
+    evaluation unit tests (34 in total) and polished the figures.
+15. **Drafted the full Deliverable 4 report**, section by section, with figures and two
+    interactive charts.
+
 ---
 
-## 3. Results so far
+## 3. Results
 
 ### 3.1 Hyperparameter search (1D CNN, validation ROC-AUC, 30-epoch budget)
 
@@ -110,17 +120,19 @@ better.
 
 ### 3.3 5-fold plant-grouped CV (identical folds for every model)
 
-| Model | ROC-AUC mean ± sd | Macro-F1 mean ± sd | Pooled OOF AUC [95% CI] |
-|---|---|---|---|
-| 1D CNN + aug | **0.781 ± 0.047** | **0.695 ± 0.038** | 0.767 [0.70–0.82] |
-| 2D Mel-CNN + aug | folds 0–1 only: 0.770, 0.791 | 0.707, 0.725 | pending |
-| Mel-LSTM + aug | pending | pending | pending |
-| 1D CNN, no aug | pending | pending | pending |
+| Model | ROC-AUC mean ± sd | Macro-F1 mean ± sd | Pooled OOF AUC [95% CI] | Plant AUC | Tomato / tobacco AUC |
+|---|---|---|---|---|---|
+| 1D CNN + aug | **0.781 ± 0.047** | **0.695 ± 0.038** | 0.767 [0.70–0.82] | 0.752 | 0.809 / 0.593 |
+| 1D CNN, no aug | 0.773 ± 0.048 | 0.692 ± 0.041 | 0.745 [0.67–0.81] | 0.701 | 0.774 / 0.592 |
+| 2D Mel-CNN + aug | 0.757 ± 0.038 | 0.679 ± 0.045 | 0.713 [0.63–0.78] | 0.662 | 0.720 / 0.597 |
+| Mel-LSTM + aug | 0.705 ± 0.064 | 0.640 ± 0.044 | 0.701 [0.64–0.75] | 0.673 | 0.712 / 0.558 |
 
-Paired preview on folds 0–1: the 1D CNN has the higher AUC on both folds (0.805 vs 0.770 and
-0.840 vs 0.791). Macro-F1 is split. **This is not a conclusion yet; wait for all 5 folds.**
+Paired tests, 1D CNN + aug minus the other model:
+- vs no-aug: ΔAUC +0.007 per fold (p = 0.57); pooled +0.021 [−0.029, +0.074].
+- vs 2D Mel-CNN: ΔAUC +0.024 per fold, 4/5 folds (p = 0.27); pooled +0.054 [−0.029, +0.137].
+- vs Mel-LSTM: ΔAUC +0.076 per fold, 5/5 folds (p = 0.059; macro-F1 p = 0.028); pooled +0.066 [+0.004, +0.124].
 
-### 3.4 What the evidence says so far
+### 3.4 What the evidence says
 
 - **Every model beats the majority baseline.** The signal is real but moderate. This is
   consistent with the original study, where an SVM separated drought from cut sounds at about 70%
@@ -132,7 +144,9 @@ Paired preview on folds 0–1: the 1D CNN has the higher AUC on both folds (0.80
   primary estimate.
 - **Tobacco is harder than tomato** (holdout AUC 0.57 vs 0.69 for the 1D CNN). There are few
   drought-tobacco clips (275), and species is partly confounded with class.
-- **1D vs 2D is undecided.** The report's claim must follow the completed paired CV.
+- **1D vs 2D, settled by CV:** the 1D CNN is ahead on every summary but not significantly.
+  Report claim: it performs at least as well as the spectrogram model, with a consistent but
+  unconfirmed edge. It is significantly better than the LSTM.
 
 ---
 
@@ -162,8 +176,7 @@ Paired preview on folds 0–1: the 1D CNN has the higher AUC on both folds (0.80
 4. **Weight plants equally.** A few plants contribute over 100 clips and dominate both the loss
    and the test metrics. Sample weights ∝ 1/clips-per-plant would make the model learn
    "drought" rather than "plant 35".
-5. **Use a formal paired test** for model comparison, such as the Nadeau–Bengio corrected
-   resampled t-test on CV folds, rather than eyeballing overlapping CIs.
+5. ~~**Use a formal paired test** for model comparison.~~ *Done in session 2: corrected resampled t-test plus paired cluster bootstrap.*
 6. **Threshold stability.** The validation-tuned threshold transfers imperfectly across plant
    sets. Plant-level aggregation with a calibrated threshold (e.g. Platt scaling on CV
    out-of-fold scores) is the deployable decision rule.
@@ -187,37 +200,16 @@ Paired preview on folds 0–1: the 1D CNN has the higher AUC on both folds (0.80
 
 ---
 
-## 6. How to resume (session 2)
+## 6. Next steps
 
-From the project folder, with the virtual environment active:
+1. **Review the report draft** in the Claude Doc. Each section maps to one rubric criterion.
+2. **Commit `context/CNN_sounds_classifier.py`** from your Mac terminal:
+   `git add context/CNN_sounds_classifier.py && git commit -m "Add reference model"`.
+   Then push to a private GitHub repo and add the link to Section 7.3.
+3. **Optional v2 experiment**, pre-registered before looking at any test set: improvements 1–4
+   in section 5.
 
-```bash
-source .venv/bin/activate          # or create it: see README §3
-make test                          # sanity check (27 tests)
-scripts/run_all.sh                 # resumable: skips everything already finished
-```
-
-`run_all.sh` will:
-1. skip manifest, EDA, tuning and the four holdout runs (already done);
-2. skip the completed 1D CNN CV;
-3. **resume the 2D Mel-CNN CV at fold 2** (folds 0–1 are on disk);
-4. run Mel-LSTM CV, then 1D CNN no-aug CV;
-5. regenerate `artifacts/comparison/` including `cv_comparison.csv`,
-   `cv_paired_differences.csv` and `cv_folds_roc_auc.png`.
-
-Estimated time: about 15 min (2D CNN remainder) + 15 min (LSTM) + 60 min (1D no-aug) on a
-2-core CPU; much less on an M-series Mac.
-
-**Then:**
-1. Fill README §4 Results with the final CV table and figures.
-2. Commit: `git add -A && git commit -m "Add final CV results"`.
-3. Start the Deliverable 4 report, Section 1: Introduction.
-
-**Decisions waiting on you**
-- Confirm that `context/CNN_sounds_classifier.py` came from the Khait et al. code release. It
-  determines how the model section credits it.
-- After CV completes: agree the report's headline claim (1D CNN superior vs. comparable).
-- Optional: approve improvements 1–4 above as a pre-registered "v2" experiment.
+To re-run everything from scratch: `make test && bash scripts/run_all.sh` (resumable).
 
 ---
 

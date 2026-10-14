@@ -59,7 +59,7 @@ src/drought_acoustics/
   reporting.py                 HTML run report
   pipeline.py                  stages: manifest, eda, train, cv, tune, compare
   cli.py                       command-line entry point
-tests/                         27 unit tests (pytest)
+tests/                         34 unit tests (pytest)
 docs/DECISIONS.md              design decisions, alternatives and evidence
 docs/PROGRESS_LOG.md           what was done, why, results so far, critique, how to resume
 scripts/run_all.sh             full resumable reproduction
@@ -81,7 +81,7 @@ pip install -r requirements.txt && pip install -e .
 #    (or point data.raw_dir in configs/default.yaml elsewhere)
 
 # 3. Verify and run
-make test          # 27 unit tests
+make test          # 34 unit tests
 make all           # manifest -> EDA -> tuning -> 4 holdout runs -> 4 x 5-fold CV -> comparison (resumable)
 ```
 
@@ -94,6 +94,7 @@ python -m drought_acoustics.cli tune  -e configs/experiments/cnn1d_aug.yaml
 python -m drought_acoustics.cli train -e configs/experiments/cnn1d_aug.yaml
 python -m drought_acoustics.cli train -e configs/experiments/cnn1d_aug.yaml --cv
 python -m drought_acoustics.cli compare
+python -m drought_acoustics.cli report --run runs/<run>   # re-render a run report
 
 # override any parameter without editing files, e.g. restrict to tomato (D1 scope):
 python -m drought_acoustics.cli train -e configs/experiments/cnn1d_aug.yaml --set "data.species=[tomato]"
@@ -111,31 +112,41 @@ python -m drought_acoustics.cli train -e configs/experiments/cnn1d_aug.yaml --se
 
 ## 4. Results
 
-> **Provisional (session 1).** CV for the baseline models is still running. See
-> `docs/PROGRESS_LOG.md` for the full status and `artifacts/comparison/` for figures.
+**5-fold plant-grouped cross-validation (primary estimate; identical folds for every model)**
 
-**5-fold plant-grouped cross-validation (primary estimate)**
+| Model | ROC-AUC (mean ± sd) | Macro-F1 (mean ± sd) | Balanced acc. | Pooled OOF AUC [95% CI] | Plant-level AUC |
+|---|---|---|---|---|---|
+| **1D CNN + augmentation (proposed, tuned)** | **0.781 ± 0.047** | **0.695 ± 0.038** | **0.701** | **0.767 [0.70–0.82]** | **0.752** |
+| 1D CNN, no augmentation | 0.773 ± 0.048 | 0.692 ± 0.041 | 0.698 | 0.745 [0.67–0.81] | 0.701 |
+| 2D Mel-CNN + augmentation (D1) | 0.757 ± 0.038 | 0.679 ± 0.045 | 0.684 | 0.713 [0.63–0.78] | 0.662 |
+| Mel-LSTM + augmentation (D1) | 0.705 ± 0.064 | 0.640 ± 0.044 | 0.642 | 0.701 [0.64–0.75] | 0.673 |
 
-| Model | ROC-AUC (mean ± sd) | Macro-F1 (mean ± sd) | Pooled OOF ROC-AUC [95% CI] |
-|---|---|---|---|
-| 1D CNN + augmentation (proposed, tuned) | 0.781 ± 0.047 | 0.695 ± 0.038 | 0.767 [0.70–0.82] |
-| 2D Mel-CNN + augmentation (D1) | *running* | | |
-| Mel-LSTM + augmentation (D1) | *queued* | | |
-| 1D CNN, no augmentation | *queued* | | |
+Paired comparisons of the proposed model (Nadeau–Bengio corrected t-test on folds; paired plant-level bootstrap on pooled out-of-fold AUC):
 
-**Holdout test set** (550 clips, 26 plants never seen in training; threshold chosen on validation)
-
-| Model | Macro-F1 | ROC-AUC [95% CI] | ROC-AUC at 0 dB SNR | at −5 dB |
+| 1D CNN + aug vs | Δ AUC per fold | Folds won | p (corrected) | Pooled Δ AUC [95% CI] |
 |---|---|---|---|---|
-| 1D CNN + aug (proposed) | 0.644 | 0.692 [0.53–0.85] | 0.657 | 0.640 |
-| 1D CNN, no aug | 0.616 | 0.662 [0.51–0.82] | 0.613 | 0.597 |
-| 2D Mel-CNN + aug (D1) | 0.671 | 0.728 [0.53–0.86] | 0.708 | 0.648 |
+| 1D CNN, no aug | +0.007 | 4/5 | 0.57 | +0.021 [−0.029, +0.074] |
+| 2D Mel-CNN | +0.024 | 4/5 | 0.27 | +0.054 [−0.029, +0.137] |
+| Mel-LSTM | +0.076 | 5/5 | 0.059 | +0.066 [+0.004, +0.124] |
+
+**Holdout test set** (550 clips, 26 unseen plants; threshold chosen on validation)
+
+| Model | Macro-F1 | ROC-AUC [95% CI] | AUC at 0 dB SNR | at −5 dB |
+|---|---|---|---|---|
+| 1D CNN + aug (proposed) | 0.645 | 0.692 [0.53–0.85] | 0.657 | 0.641 |
+| 1D CNN, no aug | 0.617 | 0.662 [0.51–0.82] | 0.613 | 0.598 |
+| 2D Mel-CNN + aug (D1) | 0.671 | 0.729 [0.53–0.86] | 0.709 | 0.649 |
 | Mel-LSTM + aug (D1) | 0.594 | 0.649 [0.52–0.79] | 0.634 | 0.645 |
 | Majority-class baseline | 0.379 | 0.500 | – | – |
 
-All models beat the baseline. Augmentation improves robustness to held-out noise. The holdout
-alone cannot separate the architectures: the CIs overlap and span about 0.3 AUC, which is why the
-paired CV comparison is the deciding evidence.
+**Conclusions.**
+- The raw-waveform 1D CNN is the best or tied-best model on every cross-validated metric.
+- It is significantly better than the Mel-LSTM, but its lead over the 2D Mel-CNN is not statistically significant with 170 plants.
+- Augmentation does not change clean-data accuracy, but it slows degradation under held-out noise: the gap is +0.030 AUC clean and +0.044 at 0 dB.
+- Performance is strong on tomato (out-of-fold AUC 0.81) and near chance on tobacco (0.59).
+- The cross-validated balanced accuracy (0.70) matches the about 70% reported by Khait et al. (2023).
+
+Figures: `artifacts/eda/`, `artifacts/comparison/`, and each run's `figures/` and `report.html`.
 
 ## 5. Limitations
 

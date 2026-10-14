@@ -75,6 +75,31 @@ SHA-256 per file and a dataset fingerprint go into every run, along with the res
 snapshot, config hash, git commit, package versions and seeds with TF op determinism.
 Long stages (tuning, CV) are resumable after interruption.
 
+### D10. Claims follow the paired cross-validation, not the holdout
+
+The single holdout ranked the 2D Mel-CNN first (AUC 0.729 vs 0.692), with CIs about 0.3 wide.
+Paired 5-fold CV on identical folds ranked the 1D CNN first on every metric:
+- AUC 0.781 vs 0.757, ahead in 4 of 5 folds;
+- pooled out-of-fold AUC +0.054, with a 95% CI of [−0.029, +0.137];
+- corrected p = 0.27, so the lead is not significant.
+
+**Decision.** The report claims the 1D CNN is at least as good as the spectrogram design, with a
+consistent but statistically unconfirmed edge. It is significantly better than the LSTM. No model
+was altered after its test results were seen.
+*(evidence: `artifacts/comparison/cv_comparison.csv`, `cv_paired_differences.csv`,
+`oof_paired_bootstrap_auc.csv`)*
+
+### D11. Statistical tests for model comparison
+
+Fold scores share about 75% of their training data, so a plain paired t-test is
+over-confident. Two tests are used:
+- **Nadeau–Bengio corrected resampled t-test** on fold differences. The variance is inflated by
+  1/(k−1), with df = k−1.
+- **Paired plant-level bootstrap** of the AUC difference on pooled out-of-fold predictions. The
+  same clips are scored by both models, and plants are resampled.
+
+Both are unit-tested.
+
 ### Out of scope / not implementable with this dataset
 
 * **Δt lead time (D1 objective 5):** the dataset has no timestamps relative to visible wilting.
