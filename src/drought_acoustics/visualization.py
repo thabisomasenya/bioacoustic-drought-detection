@@ -10,6 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import matplotlib
+import matplotlib.ticker
 
 matplotlib.use("Agg")
 import librosa  # noqa: E402
@@ -80,10 +81,13 @@ def plot_clips_per_plant(signals: pd.DataFrame, out: Path) -> Path:
     per_plant = signals.groupby(["group", "label"]).size().reset_index(name="n")
     fig, ax = plt.subplots(figsize=(6, 3.2))
     bins = np.logspace(0, np.log10(per_plant["n"].max() + 1), 20)
-    for lbl in (0, 1):
-        ax.hist(per_plant.loc[per_plant["label"] == lbl, "n"], bins=bins, alpha=0.75,
-                color=CLASS_COLORS[lbl], label=CLASS_NAMES[lbl], edgecolor="white")
+    ax.hist([per_plant.loc[per_plant["label"] == lbl, "n"] for lbl in (0, 1)], bins=bins,
+            color=[CLASS_COLORS[0], CLASS_COLORS[1]], label=[CLASS_NAMES[0], CLASS_NAMES[1]],
+            edgecolor="white", linewidth=0.8)
     ax.set_xscale("log")
+    ax.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:g}"))
+    ax.yaxis.set_major_locator(matplotlib.ticker.MaxNLocator(integer=True))
+    ax.grid(axis="x", visible=False)
     ax.set_xlabel("Clips recorded from one plant (log scale)")
     ax.set_ylabel("Number of plants")
     ax.set_title("Clips per plant: why the split must be grouped by plant")
@@ -166,7 +170,7 @@ def plot_snr_examples(x: np.ndarray, noise_bank: np.ndarray, sr: int, out: Path,
         ax.set_title("clean" if snr is None else f"SNR {snr} dB")
         ax.set_xlabel("Time (ms)")
     axes[0].set_yticks([])
-    fig.suptitle("Augmentation: one drought click mixed with held-out greenhouse/mic noise",
+    fig.suptitle("Augmentation: one drought click mixed with recorded greenhouse / empty-pot noise",
                  fontweight="bold", color=INK, y=1.08)
     return _save(fig, out)
 

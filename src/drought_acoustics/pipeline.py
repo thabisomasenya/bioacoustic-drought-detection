@@ -170,20 +170,40 @@ def run_holdout(cfg: dict, verbose: int = 2) -> Path:
             viz.plot_plant_scores(plants, thr, fig_dir / "plant_scores.png"),
             viz.plot_robustness({info["experiment"]: rob}, "roc_auc", fig_dir / "robustness_auc.png",
                                 viz.MODEL_COLORS, viz.MODEL_LABELS)]
-    headline = pd.DataFrame({k: metrics[k] for k in ["test", "test_at_0.5", "val",
-                                                       "plant_level", "majority_baseline"]}).T
-    cols = ["n", "threshold", "macro_f1", "roc_auc", "pr_auc", "balanced_accuracy",
-            "precision_drought", "recall_drought", "specificity", "mcc"]
-    tables = {"Headline metrics": headline[cols],
-              "Per species (test)": pd.DataFrame(metrics["test_per_species"]).T[cols],
-              "Robustness (all noise)": rob[rob["noise_source"] == "all"]
-              .set_index("snr_db")[["macro_f1", "roc_auc", "recall_drought", "specificity"]],
-              "Split composition": split_tbl.set_index("split")}
-    write_report(run_dir, metrics, figs, tables, info)
+    write_report(run_dir, metrics, figs, _report_tables(metrics, rob, split_tbl), info)
     t = metrics["test"]
     log.info("TEST | macro-F1 %.3f | ROC-AUC %.3f | bal-acc %.3f | thr %.2f | run %s",
              t["macro_f1"], t["roc_auc"], t["balanced_accuracy"], thr, run_dir)
     return run_dir
+
+
+REPORT_FIGURES = ["training_curves", "confusion_matrix", "roc_pr", "score_distribution",
+                  "plant_scores", "robustness_auc"]
+
+
+def _report_tables(metrics: dict, rob: pd.DataFrame, split_tbl: pd.DataFrame) -> dict:
+    headline = pd.DataFrame({k: metrics[k] for k in ["test", "test_at_0.5", "val",
+                                                       "plant_level", "majority_baseline"]}).T
+    cols = ["n", "threshold", "macro_f1", "roc_auc", "pr_auc", "balanced_accuracy",
+            "precision_drought", "recall_drought", "specificity", "mcc"]
+    return {"Headline metrics": headline[cols],
+            "Per species (test)": pd.DataFrame(metrics["test_per_species"]).T[cols],
+            "Robustness (all noise)": rob[rob["noise_source"].astype(str) == "all"]
+            .set_index("snr_db")[["macro_f1", "roc_auc", "recall_drought", "specificity"]],
+            "Split composition": split_tbl.set_index("split")}
+
+
+def rebuild_report(run_dir: str | Path) -> Path:
+    """Re-render report.html from a finished run's saved files (no retraining)."""
+    run_dir = Path(run_dir)
+    metrics = read_json(run_dir / "metrics.json")
+    rob = pd.read_csv(run_dir / "robustness.csv")
+    split_tbl = pd.read_csv(run_dir / "split_summary.csv")
+    figs = [run_dir / "figures" / f"{name}.png" for name in REPORT_FIGURES]
+    out = write_report(run_dir, metrics, figs, _report_tables(metrics, rob, split_tbl),
+                       read_json(run_dir / "run_info.json"))
+    log.info("Report rebuilt: %s", out)
+    return out
 
 
 def run_cv(cfg: dict, verbose: int = 0) -> Path:
@@ -382,11 +402,13 @@ def stage_compare_cv(cfg: dict, experiments: list[str]) -> Path | None:
         for exp, f in folds.items():
             if exp == ref:
                 continue
-            for k in ["roc_auc", "macro_f1"]:
-                d = folds[ref][k] - f[k]
+            for k in ["roc_auc", "macro_f1", "balanced_accuracy"]:
+                d = (folds[ref][k] - f[k]).dropna()
+                t_stat, p_val = ev.corrected_resampled_ttest(d.to_numpy())
                 paired.append({"comparison": f"{ref} - {exp}", "metric": k,
                                "mean_diff": d.mean(), "std_diff": d.std(),
-                               "folds_ref_better": int((d > 0).sum()), "n_folds": len(d)})
+                               "folds_ref_better": int((d > 0).sum()), "n_folds": len(d),
+                               "t_corrected": t_stat, "p_value": p_val})
         pd.DataFrame(paired).to_csv(out / "cv_paired_differences.csv", index=False)
 
     viz.plot_cv_folds(folds, "roc_auc", out / "cv_folds_roc_auc.png",

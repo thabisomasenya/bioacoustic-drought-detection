@@ -126,3 +126,26 @@ def robustness(model, X_test: np.ndarray, y_test: np.ndarray, noise_bank: np.nda
             rows.append({"noise_source": source, "snr_db": snr,
                          **compute_metrics(y_test, predict(model, X_mix, cfg), threshold)})
     return pd.DataFrame(rows)
+
+
+def corrected_resampled_ttest(diffs: np.ndarray) -> tuple[float, float]:
+    """Nadeau & Bengio (2003) corrected paired t-test for k-fold CV score differences.
+
+    Fold scores share most of their training data, so the ordinary paired t-test
+    underestimates the variance and finds "significant" differences too easily.
+    The correction inflates the variance by rho / (1 - rho) with rho = 1/k:
+
+        t = mean(d) / sqrt((1/k + 1/(k-1)) * var(d)),   df = k - 1
+    """
+    from scipy import stats
+
+    d = np.asarray(diffs, dtype=float)
+    k = len(d)
+    if k < 2:
+        return float("nan"), float("nan")
+    var = d.var(ddof=1)
+    if var == 0:
+        return float("inf") if d.mean() != 0 else 0.0, 0.0 if d.mean() != 0 else 1.0
+    t = d.mean() / np.sqrt((1 / k + 1 / (k - 1)) * var)
+    p = 2 * stats.t.sf(abs(t), df=k - 1)
+    return float(t), float(p)

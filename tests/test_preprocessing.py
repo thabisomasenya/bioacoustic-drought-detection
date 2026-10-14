@@ -47,3 +47,4 @@ def test_scaler_fits_on_train_only():
     # test statistics must not influence the fitted scale
     assert np.sqrt(np.mean(s.transform(test) ** 2)) > 10
     assert AmplitudeScaler.from_dict(s.to_dict()).scale_ == s.scale_
+

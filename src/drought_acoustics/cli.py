@@ -10,6 +10,7 @@ Examples
     python -m drought_acoustics.cli train  -e configs/experiments/cnn1d_aug.yaml \\
         --params artifacts/tuning/cnn1d_aug/best_params.json
     python -m drought_acoustics.cli compare
+    python -m drought_acoustics.cli report --run runs/<run>   # re-render report.html
     python -m drought_acoustics.cli all            # manifest -> eda -> 4 experiments -> compare
 
     # any config key can be overridden without editing files:
@@ -35,7 +36,7 @@ EXP_DIR = Path("configs/experiments")
 def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(prog="drought_acoustics", description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("stage", choices=["manifest", "eda", "train", "tune", "compare", "all"])
+    ap.add_argument("stage", choices=["manifest", "eda", "train", "tune", "compare", "report", "all"])
     ap.add_argument("-e", "--experiment", type=Path, help="experiment YAML (overrides default)")
     ap.add_argument("-c", "--config", type=Path, default=Path("configs/default.yaml"))
     ap.add_argument("--set", action="append", default=[], metavar="KEY=VALUE",
@@ -43,6 +44,8 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--params", type=Path, metavar="JSON",
                     help="apply tuned hyperparameters, e.g. artifacts/tuning/cnn1d_aug/best_params.json")
     ap.add_argument("--cv", action="store_true", help="grouped K-fold CV instead of holdout")
+    ap.add_argument("--run", type=Path, action="append", default=[],
+                    help="run folder(s) for the report stage")
     ap.add_argument("-v", "--verbose", type=int, default=2, help="Keras verbosity (0-2)")
     args = ap.parse_args(argv)
 
@@ -61,6 +64,9 @@ def main(argv: list[str] | None = None) -> None:
         (pl.run_cv if args.cv else pl.run_holdout)(cfg, verbose=args.verbose)
     elif args.stage == "tune":
         pl.stage_tune(cfg)
+    elif args.stage == "report":
+        for run in args.run:
+            pl.rebuild_report(run)
     elif args.stage == "compare":
         pl.stage_compare(cfg, EXPERIMENTS)
         pl.stage_compare_cv(cfg, EXPERIMENTS)
