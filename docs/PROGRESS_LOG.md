@@ -2,7 +2,7 @@
 
 **Session 1: Tue 13 Oct 2026, 17:30–21:45 (SAST).** Pipeline built, holdout runs, 1D CNN CV.
 **Session 2: Wed 14 Oct 2026, from 09:27 (SAST).** CV completed for all models, statistical
-comparison added, and the Deliverable 4 report drafted (Claude Doc).
+comparison added, and the Deliverable 4 report drafted.
 **Status:** all experiments are complete and committed. The report draft covers all 8 sections.
 
 ---
@@ -21,7 +21,7 @@ comparison added, and the Deliverable 4 report drafted (Claude Doc).
 | 5-fold grouped CV, all 4 models | Done |
 | Paired comparison (corrected t-test + paired cluster bootstrap) | Done: `artifacts/comparison/` |
 | README results | Final |
-| Deliverable 4 report | Drafted in a Claude Doc, all 8 sections + references; awaiting your review |
+| Deliverable 4 report | Drafted, all 8 sections + references; awaiting your review |
 
 ## 2. What was done and why (chronological)
 
@@ -202,7 +202,7 @@ Paired tests, 1D CNN + aug minus the other model:
 
 ## 6. Next steps
 
-1. **Review the report draft** in the Claude Doc. Each section maps to one rubric criterion.
+1. **Review the report draft** document. Each section maps to one rubric criterion.
 2. **Commit `context/CNN_sounds_classifier.py`** from your Mac terminal:
    `git add context/CNN_sounds_classifier.py && git commit -m "Add reference model"`.
    Then push to a private GitHub repo and add the link to Section 7.3.
