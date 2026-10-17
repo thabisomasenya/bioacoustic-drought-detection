@@ -1,0 +1,4 @@
+# Generated outputs: exclude from GitHub language stats
+runs/** linguist-generated
+artifacts/** linguist-generated
+*.html linguist-generated
